@@ -32,11 +32,6 @@ const userSchema = new Schema({
  password:{
   type: String,
   required: true,
-  validate(value){
-   if(!validator.isStrongPassword(value)){
-    throw new Error("Weak Password");
-   }
-  }
  },
  photoUrl:{
   type: String,

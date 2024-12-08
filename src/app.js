@@ -1,8 +1,11 @@
 const express = require("express");
 const {connectDB} = require("./config/database");
+const bcrypt = require('bcrypt');
+const validator = require("validator");
 const app = express();
 const PORT = 8080;
 const {User} = require("./models/Users.model");
+const {singUpValidation} = require("./helpers/validation.helpers");
 
 app.use(express.json()); //Middleware - to parse the request body -- JSON to JS Object
 
@@ -16,17 +19,54 @@ connectDB().then(()=>{
  console.log("Some Error while connecting to database and starting server",error);
 })
 
-app.post("/users",async (req,res)=>{
- const UserInstance = req.body;
- console.log(UserInstance);
+/* User APIS */
+app.post("/signup",async (req,res)=>{
+ const UserInstance = req.body; 
+
  try{
+   singUpValidation(UserInstance);
+
+   const password = UserInstance.password;
+
+   const isStrongPassword = validator.isStrongPassword(password);
+   if(!isStrongPassword){
+    throw new Error("Password is not strong enough");
+   }
+
+   const passwordHash = await bcrypt.hash(password,10);
+
+   UserInstance.password = passwordHash;
+
    const user = new User(UserInstance);
    await user.save();
    res.status(201).send("User Added Successfully");
  }
  catch(error){
-  res.status(500).send("Adding User Failed");
+  res.status(500).send("Adding User Failed "+ error.message);
  }
+})
+
+app.post("/login",async (req,res)=>{
+  const email = req.body.email;
+  const password = req.body.password;
+  try{
+    const user = await User.findOne({email:email});
+    
+    if(!user){
+      throw new Error("Invalid Credentials");
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if(!isValidPassword){
+      throw new Error("Invalid Credentials");
+    }
+
+    return res.send("Login successful User: " + user)
+  }
+  catch(error){
+    res.status(400).send("Login Failed "+error.message);
+  }
 })
 
 app.get("/users", async (req,res)=>{
