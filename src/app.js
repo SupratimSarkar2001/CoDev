@@ -69,9 +69,28 @@ app.delete("/users", async (req,res) =>{
 //PUT - Entire update
 //PATCH - Partial update
 app.patch("/users", async (req,res) => {
+  console.log("Trying to update user");
   const updatedUserInstance = req.body;
-  const userId = req.body.userId;
+  const userId = req.query.userId;
+  const UPDATEABLE_FIELDS = ["about","skills"];
   try{
+
+    if(!Object.keys(updatedUserInstance).every(key => UPDATEABLE_FIELDS.includes(key))){
+      throw new Error("Only about and skills can be updated");
+    }
+
+    if(req.body?.skills?.length>30){
+      throw new Error("Skills cannot be more than 30");
+    }
+
+    if(req.body?.about?.length>200){
+      throw new Error("About cannot be more than 200");
+    }
+
+    if(updatedUserInstance?.skills?.length && updatedUserInstance?.skills?.length !== new Set(updatedUserInstance?.skills).size){
+      throw new Error("Skills must have unique values");
+    }
+
     await User.findByIdAndUpdate(userId,updatedUserInstance);
     return res.status(200).send("User Updated Successfully");
   }  
