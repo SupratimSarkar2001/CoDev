@@ -2,12 +2,17 @@ const express = require("express");
 const {connectDB} = require("./config/database");
 const bcrypt = require('bcrypt');
 const validator = require("validator");
+const cookieParser = require('cookie-parser')
+const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = 8080;
 const {User} = require("./models/Users.model");
 const {singUpValidation} = require("./helpers/validation.helpers");
 
+const JWT_SECRET ="BSJsdguIGUBUHHBJbJHuIBJBGdgwd"
+
 app.use(express.json()); //Middleware - to parse the request body -- JSON to JS Object
+app.use(cookieParser());
 
 /*Start the server*/
 
@@ -62,10 +67,29 @@ app.post("/login",async (req,res)=>{
       throw new Error("Invalid Credentials");
     }
 
+    const token = await jwt.sign({_id: user._id, firstName:user.firstName },JWT_SECRET)
+
+    res.cookie("token", token)
     return res.send("Login successful User: " + user)
   }
   catch(error){
     res.status(400).send("Login Failed "+error.message);
+  }
+})
+
+app.get("/profile", async (req,res)=>{
+  try{
+    const cookies = req.cookies; 
+    const {token} = cookies;
+
+    const {_id, firstName} = await jwt.verify(token, JWT_SECRET);
+    
+    console.log(_id, firstName);
+    const user =  await User.findById(_id);
+    res.send(user)
+  }
+  catch(error){
+    res.status(400).send("Getting Profile Fails :"+error)
   }
 })
 
