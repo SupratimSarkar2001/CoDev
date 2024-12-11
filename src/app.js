@@ -8,6 +8,7 @@ const app = express();
 const PORT = 8080;
 const {User} = require("./models/Users.model");
 const {singUpValidation} = require("./helpers/validation.helpers");
+const {userAuth} = require("./middlewares/auth.middleware")
 
 const JWT_SECRET ="BSJsdguIGUBUHHBJbJHuIBJBGdgwd"
 
@@ -61,13 +62,13 @@ app.post("/login",async (req,res)=>{
       throw new Error("Invalid Credentials");
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await user.isPasswordValid(password);
 
     if(!isValidPassword){
       throw new Error("Invalid Credentials");
     }
 
-    const token = await jwt.sign({_id: user._id, firstName:user.firstName },JWT_SECRET)
+    const token = await user.generateJWTToken();
 
     res.cookie("token", token)
     return res.send("Login successful User: " + user)
@@ -77,15 +78,9 @@ app.post("/login",async (req,res)=>{
   }
 })
 
-app.get("/profile", async (req,res)=>{
+app.get("/profile",userAuth,async (req,res)=>{
   try{
-    const cookies = req.cookies; 
-    const {token} = cookies;
-
-    const {_id, firstName} = await jwt.verify(token, JWT_SECRET);
-    
-    console.log(_id, firstName);
-    const user =  await User.findById(_id);
+    const user = req.user;
     res.send(user)
   }
   catch(error){

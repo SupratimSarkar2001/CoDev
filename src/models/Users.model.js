@@ -1,6 +1,10 @@
 const e = require("express");
 const {Schema,model} = require("mongoose");
 const validator = require("validator");
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET ="BSJsdguIGUBUHHBJbJHuIBJBGdgwd"
 
 const userSchema = new Schema({
  firstName:{
@@ -58,6 +62,24 @@ const userSchema = new Schema({
   type: [String]
  }
 });
+
+userSchema.methods.isPasswordValid = async function(passwordInput){
+
+ const passwordHash = this.password;
+ const isValid = await bcrypt.compare(passwordInput, passwordHash);
+ return isValid;
+}
+
+userSchema.methods.generateJWTToken = async function(){
+ const tokenObject = {
+  _id: this._id,
+  firstName: this.firstName
+ }
+
+const token = await jwt.sign(tokenObject,JWT_SECRET, {expiresIn:'1d'})
+
+return token;
+}
 
 const User = model("User",userSchema);
 
