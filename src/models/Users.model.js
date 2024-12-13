@@ -1,4 +1,3 @@
-const e = require("express");
 const {Schema,model} = require("mongoose");
 const validator = require("validator");
 const bcrypt = require('bcrypt');
