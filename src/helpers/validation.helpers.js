@@ -12,5 +12,18 @@ const singUpValidation = (UserInstance) => {
  }
 }
 
+const profileEditOptionValidation = (userPatch) =>{
+  const allowedUpdateFiled = [
+    "photoUrl","age","about","skills"
+  ]
 
-module.exports = {singUpValidation}
+  const isEveryMentionedFiledAllowed = Object.keys(userPatch).every((key)=>allowedUpdateFiled.includes(key));
+
+  if(!isEveryMentionedFiledAllowed){
+    throw new Error("Mentioned Fields are not all allowed");
+  }
+
+  return isEveryMentionedFiledAllowed;
+}
+
+module.exports = {singUpValidation, profileEditOptionValidation}
