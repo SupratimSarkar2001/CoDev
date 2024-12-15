@@ -4,15 +4,17 @@ const connectionRequestSchema = new Schema({
   fromId: {
     type: Types.ObjectId,
     required: true,
+    ref: 'User'
   },
   toId: {
     type: Types.ObjectId,
     required: true,
+    ref:'User'
   },
   status: {
     type: String,
     enum: {
-      values: ['accepted', 'rejected', 'pass', 'like'],
+      values: ['accepted', 'rejected', 'pass', 'fail'],
       message: '{VALUE} is not allowed as status',
     },
   },

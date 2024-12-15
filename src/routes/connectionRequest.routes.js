@@ -7,7 +7,7 @@ const connectionRequestRouter = express.Router();
 
 connectionRequestRouter.post("/:status/:toId",userAuth, async (req,res)=>{
  try{
-  const allowedStatus = ["like","pass"];
+  const allowedStatus = ["fail","pass"];
   const { status,toId } = req.params;
  
   if(!allowedStatus.includes(status)){
@@ -48,6 +48,38 @@ connectionRequestRouter.post("/:status/:toId",userAuth, async (req,res)=>{
  catch(error){
   res.status(400).send("Sending Connection Request Faild" + error);
  }
+})
+
+connectionRequestRouter.post("/pending/:status/:requestId",userAuth, async(req,res)=>{
+  try{
+    const loggedUser = req.user;
+    const {status, requestId} = req.params;
+
+    const allowedStatus = ['accepted', 'rejected'];
+
+    if(!allowedStatus.includes(status)){
+      throw new Error("This Status is not allowed");
+    }
+
+    const pendingConnectionRequest = await ConnectionRequest.findOne({
+      _id: requestId,
+      toId: loggedUser._id,
+      status: 'pass'
+    })
+
+    if(!pendingConnectionRequest){
+      throw new Error("No Pending request by this id");
+    }
+
+    pendingConnectionRequest.status = status;
+
+    await pendingConnectionRequest.save();
+
+    res.send("Approved/Reject Successfull")
+  } 
+  catch(error){
+    res.status(400).send("Approving/Rejecting Connection Request Failed"+ error)
+  }
 })
 
 module.exports={
